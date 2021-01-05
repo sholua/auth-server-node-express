@@ -1,17 +1,12 @@
-const express = require('express');
-const cors = require('cors');
-
+const winston = require("winston");
+const express = require("express");
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-const db = require('./db');
-
-app.get('/', (req, res) => {
-  res.send('Hi there!!!');
-});
+require("./startup/config")();
+require("./startup/db")();
+require("./startup/logging")();
+require("./startup/validation")();
+// require("./startup/routes")(app);
 
 const port = process.env.PORT || 5000;
-app.listen(port, err => {
-  console.log('Listening');
-});
+app.listen(port, () => winston.info(`Listening on port ${port}...`));
