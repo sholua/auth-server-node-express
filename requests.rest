@@ -1,10 +1,10 @@
 @apiUrl = http://172.17.0.2/api
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmZkODZlMTkzOGNiZDAzZTJmMTcxNmYiLCJpYXQiOjE2MTA0NjU3Njh9.z4-Z_ttyL-67XeOHdmH-oanOXtp52G8MUDGe5YtgUz8
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmZkODZlMTkzOGNiZDAzZTJmMTcxNmYiLCJpYXQiOjE2MTA0NzA0MTJ9.JlXiKg2tSYhvvFLGDv2U76lbbaZkM9SyvXQgN7a-B24
 @refreshToken = ...
 
 GET {{apiUrl}}/users
 Content-Type: application/json
-x-access-token: {{accessToken}}
+authorization: {{accessToken}}
 
 ###
 POST {{apiUrl}}/users

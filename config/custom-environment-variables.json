@@ -1,3 +1,4 @@
 {
-    "jwtPrivateKey": "music_school_jwtPrivateKey"
+    "accessTokenSecret": "musicSchool_accessTokenSecret",
+    "refreshTokenSecret": "musicSchool_refreshTokenSecret"
 }
