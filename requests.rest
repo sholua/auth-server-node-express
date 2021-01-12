@@ -1,0 +1,27 @@
+@apiUrl = http://172.17.0.2/api
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmZkODZlMTkzOGNiZDAzZTJmMTcxNmYiLCJpYXQiOjE2MTA0NjU3Njh9.z4-Z_ttyL-67XeOHdmH-oanOXtp52G8MUDGe5YtgUz8
+@refreshToken = ...
+
+GET {{apiUrl}}/users
+Content-Type: application/json
+x-access-token: {{accessToken}}
+
+###
+POST {{apiUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Oleksandr",
+  "email": "s.52@ukr.net",
+  "password": "123456qW!"
+}
+
+
+### 
+POST {{apiUrl}}/auth
+Content-Type: application/json
+
+{
+  "email": "s.52@ukr.net",
+  "password": "123456qW!"
+}

@@ -2,9 +2,11 @@ const { User, validate } = require("../models/user");
 const router = require("express").Router();
 const _ = require("lodash");
 const bcrypt = require("bcrypt");
+const auth = require("../middleware/auth");
 
-router.get("/", (req, res) => {
-  return res.send("Hello!");
+router.get("/", auth, async (req, res) => {
+  const users = await User.find().select("_id name email");
+  res.send(users);
 });
 
 router.post("/", async (req, res) => {
