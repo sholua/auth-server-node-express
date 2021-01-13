@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const passwordComplexity = require("joi-password-complexity").default;
 const config = require("config");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const Token = require("./token");
 
 const userScheme = new mongoose.Schema({
   name: {
@@ -38,6 +40,40 @@ userScheme.methods.generateAuthTokens = function () {
   );
   return { accessToken, refreshToken };
 };
+
+userScheme.methods = {
+  generateAccessToken: function () {
+    const accessToken = jwt.sign(
+      { _id: this._id },
+      config.get("accessTokenSecret"),
+      {
+        expiresIn: "10m",
+      }
+    );
+
+    return accessToken;
+  },
+
+  generateRefreshToken: async function () {
+    const refreshToken = jwt.sign(
+      { _id: this._id },
+      config.get("refreshTokenSecret"),
+      {
+        expiresIn: "1d",
+      }
+    );
+
+    await new Token({ token: refreshToken }).save();
+
+    return refreshToken;
+  },
+};
+
+userScheme.pre("save", async function (next) {
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  return next();
+});
 
 const User = mongoose.model("User", userScheme);
 
