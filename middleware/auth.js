@@ -11,6 +11,9 @@ module.exports = function (req, res, next) {
     req.user = decoded;
     next();
   } catch (ex) {
+    if (ex.name === "TokenExpiredError")
+      return res.status(401).send("Session timed out, please login again.");
+
     res.status(400).send("Invalid token.");
   }
 };

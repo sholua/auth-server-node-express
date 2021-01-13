@@ -4,7 +4,7 @@ const passwordComplexity = require("joi-password-complexity").default;
 const config = require("config");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const Token = require("./token");
+const { Token } = require("./token");
 
 const userScheme = new mongoose.Schema({
   name: {
@@ -35,7 +35,7 @@ userScheme.methods = {
       { _id: this._id },
       config.get("accessTokenSecret"),
       {
-        expiresIn: "10m",
+        expiresIn: "15s",
       }
     );
 
