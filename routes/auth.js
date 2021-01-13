@@ -45,9 +45,10 @@ router.post("/login", async (req, res) => {
     .send(_.pick(user, ["_id", "name", "email"]));
 });
 
-router.post("/refresh_token", (req, res) => {
+router.post("/refresh_token", async (req, res) => {
   const { refreshToken } = req.body;
-  if (!refreshToken) return res.status(403).send("Access denied, token missing!");
+  if (!refreshToken)
+    return res.status(403).send("Access denied, token missing!");
 
   const tokenDoc = await Token.findOne({ token: refreshToken });
   if (!tokenDoc) return res.status(401).send("Token expired!");
@@ -58,6 +59,12 @@ router.post("/refresh_token", (req, res) => {
   });
 
   return res.status(200).send(accessToken);
+});
+
+router.delete("/logout", async (req, res) => {
+  const { refreshToken } = req.body;
+  await Token.findOneAndDelete({ token: refreshToken });
+  return res.status(200).send("User logged out!");
 });
 
 function validateCredentials(req) {
