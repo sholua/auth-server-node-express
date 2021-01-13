@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const router = require("express").Router();
 const { User, validate: validateUser } = require("../models/user");
 const _ = require("lodash");
+const config = require("config");
+const jwt = require("jsonwebtoken");
 
 router.post("/signup", async (req, res) => {
   const { error } = validateUser(req.body);
@@ -41,6 +43,21 @@ router.post("/login", async (req, res) => {
     .header("x-access-token", accessToken)
     .header("x-refresh-token", refreshToken)
     .send(_.pick(user, ["_id", "name", "email"]));
+});
+
+router.post("/refresh_token", (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) return res.status(403).send("Access denied, token missing!");
+
+  const tokenDoc = await Token.findOne({ token: refreshToken });
+  if (!tokenDoc) return res.status(401).send("Token expired!");
+
+  const payload = jwt.verify(tokenDoc.token, config.get("refreshTokenSecret"));
+  const accessToken = jwt.sign(payload, config.get("accessTokenSecret"), {
+    expiresIn: "10m",
+  });
+
+  return res.status(200).send(accessToken);
 });
 
 function validateCredentials(req) {

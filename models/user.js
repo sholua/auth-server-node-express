@@ -29,18 +29,6 @@ const userScheme = new mongoose.Schema({
   },
 });
 
-userScheme.methods.generateAuthTokens = function () {
-  const accessToken = jwt.sign(
-    { _id: this._id },
-    config.get("accessTokenSecret")
-  );
-  const refreshToken = jwt.sign(
-    { _id: this._id },
-    config.get("refreshTokenSecret")
-  );
-  return { accessToken, refreshToken };
-};
-
 userScheme.methods = {
   generateAccessToken: function () {
     const accessToken = jwt.sign(
