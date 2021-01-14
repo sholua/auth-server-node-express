@@ -113,7 +113,27 @@ router.post("/reset_password", async (req, res) => {
 });
 
 router.post("/new_password", async (req, res) => {
-  const { newPassword } = req.body;
+  const { userId, token, newPassword } = req.body;
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).send("Invalid user.");
+
+  try {
+    const secret = user.password + "-" + user.createdAt;
+    const payload = jwt.verify(token, secret);
+    if (payload.userId !== user._id.toString())
+      return res.status(400).send("Invalid user.");
+
+    user.password = newPassword;
+    await user.save();
+  } catch (ex) {
+    if (ex.name === "TokenExpiredError")
+      return res.status(401).send("Reset password token expired.");
+
+    return res.status(400).send("Wrong reset password token.");
+  }
+
+  res.status(202).send("Password changed.");
 });
 
 module.exports = router;
