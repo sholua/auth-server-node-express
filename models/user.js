@@ -38,7 +38,7 @@ userScheme.methods = {
       { _id: this._id },
       config.get("accessTokenSecret"),
       {
-        expiresIn: "15s",
+        expiresIn: "10m",
       }
     );
 

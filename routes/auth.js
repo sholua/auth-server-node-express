@@ -63,7 +63,7 @@ router.post("/refresh_token", async (req, res) => {
     config.get("refreshTokenSecret")
   );
   const accessToken = jwt.sign(userPayload, config.get("accessTokenSecret"), {
-    expiresIn: "15s",
+    expiresIn: "10m",
   });
 
   res.status(200).send({ accessToken });
