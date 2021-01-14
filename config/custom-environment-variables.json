@@ -1,4 +1,5 @@
 {
     "accessTokenSecret": "musicSchool_accessTokenSecret",
-    "refreshTokenSecret": "musicSchool_refreshTokenSecret"
+    "refreshTokenSecret": "musicSchool_refreshTokenSecret",
+    "emailPassword": "musicSchool_emailPassword"
 }

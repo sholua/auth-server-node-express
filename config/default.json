@@ -1,4 +1,5 @@
 {
     "accessTokenSecret": "",
-    "refreshTokenSecret": ""
+    "refreshTokenSecret": "",
+    "emailPassword": ""
 }

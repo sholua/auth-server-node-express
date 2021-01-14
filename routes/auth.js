@@ -6,6 +6,10 @@ const config = require("config");
 const jwt = require("jsonwebtoken");
 const { User, validate: validateUser } = require("../models/user");
 const { Token } = require("../models/token");
+const {
+  buildResetPasswordTemplate,
+  transporter,
+} = require("../utilities/email");
 
 router.post("/signup", async (req, res) => {
   const { error } = validateUser(req.body);
@@ -80,5 +84,36 @@ function validateCredentials(req) {
 
   return schema.validate(req);
 }
+
+router.post("/reset_password", async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user)
+    return res.status(404).send({ message: "No user with that email" });
+
+  const { _id: userId, password: passwordHash, createdAt } = user;
+  const secret = passwordHash + "-" + createdAt;
+  const token = jwt.sign({ userId }, secret, {
+    expiresIn: "10m",
+  });
+
+  // url for React app
+  const resetUrl = `${req.headers["x-forwarded-proto"]}://${req.headers.host}/new_password/${userId}/${token}`;
+  const emailTemplate = buildResetPasswordTemplate(user, resetUrl);
+
+  transporter.sendMail(emailTemplate, (err) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).send("Error sending email");
+    }
+
+    res.status(200).send("Email sent.");
+  });
+});
+
+router.post("/new_password", async (req, res) => {
+  const { newPassword } = req.body;
+});
 
 module.exports = router;
