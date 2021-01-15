@@ -1,3 +1,5 @@
 {
-    "jwtPrivateKey": ""
+    "accessTokenSecret": "",
+    "refreshTokenSecret": "",
+    "emailPassword": ""
 }

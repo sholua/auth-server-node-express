@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const users = require("../routes/users");
-const auth = require("../routes/auth");
 const error = require("../middleware/error");
+const auth = require("../routes/auth");
 
 module.exports = function (app) {
   app.use(cors());
