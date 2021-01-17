@@ -4,32 +4,12 @@ const router = require("express").Router();
 const _ = require("lodash");
 const config = require("config");
 const jwt = require("jsonwebtoken");
-const { User, validate: validateUser } = require("../models/user");
+const { User } = require("../models/user");
 const { Token } = require("../models/token");
 const {
   buildResetPasswordTemplate,
   transporter,
 } = require("../utilities/email");
-
-router.post("/signup", async (req, res) => {
-  const { error } = validateUser(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
-
-  let user = await User.findOne({ email: req.body.email });
-  if (user) return res.status(400).send("User already registered.");
-
-  user = new User(_.pick(req.body, ["name", "email", "password"]));
-
-  await user.save();
-  const accessToken = user.generateAccessToken();
-  const refreshToken = await user.generateRefreshToken();
-
-  res
-    .header("x-access-token", accessToken)
-    .header("x-refresh-token", refreshToken)
-    .status(201)
-    .send({ user: _.pick(user, ["_id", "name", "email"]) });
-});
 
 router.post("/login", async (req, res) => {
   const { error } = validateCredentials(req.body);

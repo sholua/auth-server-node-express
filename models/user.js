@@ -35,7 +35,7 @@ const userScheme = new mongoose.Schema(
 userScheme.methods = {
   generateAccessToken: function () {
     const accessToken = jwt.sign(
-      { _id: this._id },
+      { _id: this._id, name: this.name },
       config.get("accessTokenSecret"),
       {
         expiresIn: "10m",
@@ -68,7 +68,7 @@ userScheme.pre("save", async function (next) {
 
 const User = mongoose.model("User", userScheme);
 
-function validateUser(user) {
+function validate(user) {
   const schema = Joi.object({
     name: Joi.string().min(4).max(50).required(),
     email: Joi.string().email().min(5).max(255).required(),
@@ -79,4 +79,4 @@ function validateUser(user) {
 }
 
 exports.User = User;
-exports.validate = validateUser;
+exports.validate = validate;
