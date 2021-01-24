@@ -27,7 +27,7 @@ router.post("/login", async (req, res) => {
   res
     .header("x-access-token", accessToken)
     .header("x-refresh-token", refreshToken)
-    .send({ user: _.pick(user, ["_id", "name", "email"]) });
+    .send(_.pick(user, ["_id", "name", "email"]));
 });
 
 router.post("/refresh_token", async (req, res) => {
