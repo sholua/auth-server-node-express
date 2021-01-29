@@ -4,12 +4,51 @@ const router = require("express").Router();
 const _ = require("lodash");
 const config = require("config");
 const jwt = require("jsonwebtoken");
-const { User } = require("../models/user");
+const { User, validate } = require("../models/user");
 const { Token } = require("../models/token");
 const {
   buildResetPasswordTemplate,
   transporter,
 } = require("../utilities/email");
+
+function validateCredentials(req) {
+  const schema = Joi.object({
+    email: Joi.string().email().min(5).max(255).required(),
+    password: Joi.string().min(8).max(1024).required(),
+  });
+
+  return schema.validate(req);
+}
+
+router.post("/register", async (req, res) => {
+  const { error } = validate(req.body);
+  if (error) {
+    ////
+    const errors = {};
+    error.details.forEach((item) => {
+      if (!errors[item.context.key]) errors[item.context.key] = [item.message];
+      else errors[item.context.key].push(item.message);
+    });
+    ////
+
+    return res.status(400).send(errors);
+  }
+
+  let user = await User.findOne({ email: req.body.email });
+  if (user) return res.status(400).send("User already registered.");
+
+  user = new User(_.pick(req.body, ["name", "email", "password"]));
+
+  await user.save();
+  const accessToken = user.generateAccessToken();
+  const refreshToken = await user.generateRefreshToken();
+
+  res
+    .header("x-access-token", accessToken)
+    .header("x-refresh-token", refreshToken)
+    .status(201)
+    .send(_.pick(user, ["_id", "name", "email"]));
+});
 
 router.post("/login", async (req, res) => {
   const { error } = validateCredentials(req.body);
@@ -55,15 +94,6 @@ router.delete("/logout", async (req, res) => {
 
   res.status(200).send({ message: "User logged out!" });
 });
-
-function validateCredentials(req) {
-  const schema = Joi.object({
-    email: Joi.string().email().min(5).max(255).required(),
-    password: Joi.string().min(8).max(1024).required(),
-  });
-
-  return schema.validate(req);
-}
 
 router.post("/reset_password", async (req, res) => {
   const { email } = req.body;
