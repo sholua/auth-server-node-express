@@ -74,15 +74,19 @@ router.post("/login", async (req, res) => {
 router.post("/refresh_token", async (req, res) => {
   let { refreshToken } = req.body;
   if (!refreshToken)
-    return res.status(403).send("Access denied, token missing!");
+    return res.status(403).send("Access denied, token missing.");
 
   const tokenDoc = await Token.findOne({ token: refreshToken });
-  if (!tokenDoc) return res.status(401).send("Token expired!");
+  if (!tokenDoc) return res.status(401).send("Token expired.");
 
-  const { iat, exp, ...userPayload } = jwt.verify(
-    tokenDoc.token,
-    config.get("refreshTokenSecret")
-  );
+  try {
+    const { iat, exp, ...userPayload } = jwt.verify(
+      tokenDoc.token,
+      config.get("refreshTokenSecret")
+    );
+  } catch (ex) {
+    return res.status(401).send("Token expired.");
+  }
   const user = await User.findById(userPayload._id);
   const accessToken = user.generateAccessToken();
   refreshToken = user.generateRefreshToken();
