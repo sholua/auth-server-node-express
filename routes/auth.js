@@ -93,7 +93,7 @@ router.post("/refresh_token", async (req, res) => {
 });
 
 router.delete("/logout", async (req, res) => {
-  const { refreshToken } = req.body;
+  const { refreshToken } = req.body.params;
   await Token.findOneAndDelete({ token: refreshToken });
 
   res.status(200).send("User logged out!");
