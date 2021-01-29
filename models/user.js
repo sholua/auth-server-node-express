@@ -4,7 +4,6 @@ const passwordComplexity = require("joi-password-complexity").default;
 const config = require("config");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { Token } = require("./token");
 
 const userScheme = new mongoose.Schema(
   {
@@ -45,7 +44,7 @@ userScheme.methods = {
     return accessToken;
   },
 
-  generateRefreshToken: async function () {
+  generateRefreshToken: function () {
     const refreshToken = jwt.sign(
       { _id: this._id },
       config.get("refreshTokenSecret"),
@@ -53,8 +52,6 @@ userScheme.methods = {
         expiresIn: "1d",
       }
     );
-
-    await new Token({ token: refreshToken }).save();
 
     return refreshToken;
   },

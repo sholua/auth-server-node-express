@@ -41,7 +41,8 @@ router.post("/register", async (req, res) => {
 
   await user.save();
   const accessToken = user.generateAccessToken();
-  const refreshToken = await user.generateRefreshToken();
+  const refreshToken = user.generateRefreshToken();
+  await new Token({ token: refreshToken }).save();
 
   res
     .header("x-access-token", accessToken)
@@ -61,7 +62,8 @@ router.post("/login", async (req, res) => {
   if (!validPassword) return res.status(400).send("Invalid email or password.");
 
   const accessToken = user.generateAccessToken();
-  const refreshToken = await user.generateRefreshToken();
+  const refreshToken = user.generateRefreshToken();
+  await new Token({ token: refreshToken }).save();
 
   res
     .header("x-access-token", accessToken)
@@ -70,7 +72,7 @@ router.post("/login", async (req, res) => {
 });
 
 router.post("/refresh_token", async (req, res) => {
-  const { refreshToken } = req.body;
+  let { refreshToken } = req.body;
   if (!refreshToken)
     return res.status(403).send("Access denied, token missing!");
 
@@ -81,18 +83,20 @@ router.post("/refresh_token", async (req, res) => {
     tokenDoc.token,
     config.get("refreshTokenSecret")
   );
-  const accessToken = jwt.sign(userPayload, config.get("accessTokenSecret"), {
-    expiresIn: "10m",
-  });
+  const user = await User.findById(userPayload._id);
+  const accessToken = user.generateAccessToken();
+  refreshToken = user.generateRefreshToken();
+  tokenDoc.token = refreshToken;
+  await tokenDoc.save();
 
-  res.status(200).send({ accessToken });
+  res.status(201).send({ accessToken, refreshToken });
 });
 
 router.delete("/logout", async (req, res) => {
   const { refreshToken } = req.body;
   await Token.findOneAndDelete({ token: refreshToken });
 
-  res.status(200).send({ message: "User logged out!" });
+  res.status(200).send("User logged out!");
 });
 
 router.post("/reset_password", async (req, res) => {
