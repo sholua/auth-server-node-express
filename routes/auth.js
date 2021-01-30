@@ -1,5 +1,4 @@
 const Joi = require("joi");
-const bcrypt = require("bcrypt");
 const router = require("express").Router();
 const _ = require("lodash");
 const config = require("config");
@@ -58,7 +57,7 @@ router.post("/login", async (req, res) => {
   let user = await User.findOne({ email: req.body.email });
   if (!user) return res.status(400).send("Invalid email or password.");
 
-  const validPassword = await bcrypt.compare(req.body.password, user.password);
+  const validPassword = user.validatePassword(req.body.password);
   if (!validPassword) return res.status(400).send("Invalid email or password.");
 
   const accessToken = user.generateAccessToken();
