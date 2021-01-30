@@ -79,19 +79,16 @@ router.post("/refresh_token", async (req, res) => {
   const tokenDoc = await Token.findOne({ token: refreshToken });
   if (!tokenDoc) return res.status(401).send("Token expired.");
 
-  try {
-    const { iat, exp, ...userPayload } = jwt.verify(
-      tokenDoc.token,
-      config.get("refreshTokenSecret")
-    );
-  } catch (ex) {
-    return res.status(401).send("Token expired.");
-  }
+  const { iat, exp, ...userPayload } = jwt.verify(
+    tokenDoc.token,
+    config.get("refreshTokenSecret")
+  );
+
   const user = await User.findById(userPayload._id);
   const accessToken = user.generateAccessToken();
-  refreshToken = user.generateRefreshToken();
-  tokenDoc.token = refreshToken;
-  await tokenDoc.save();
+  // refreshToken = user.generateRefreshToken();
+  // tokenDoc.token = refreshToken;
+  // await tokenDoc.save();
 
   res.status(201).send({ accessToken, refreshToken });
 });
