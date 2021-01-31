@@ -8,15 +8,8 @@ const {
   buildResetPasswordTemplate,
   transporter,
 } = require("../utilities/email");
-
-function validateCredentials(req) {
-  const schema = Joi.object({
-    email: Joi.string().email().min(5).max(255).required(),
-    password: Joi.string().min(8).max(1024).required(),
-  });
-
-  return schema.validate(req);
-}
+const { pickLoggedUserFields } = require("../utilities/user");
+const auth = require("../middleware/auth");
 
 router.post("/register", async (req, res) => {
   const { error } = validate(req.body);
@@ -47,7 +40,7 @@ router.post("/register", async (req, res) => {
     .header("x-access-token", accessToken)
     .header("x-refresh-token", refreshToken)
     .status(201)
-    .send(_.pick(user, ["_id", "name", "email"]));
+    .send(pickLoggedUserFields(user));
 });
 
 router.post("/login", async (req, res) => {
@@ -68,7 +61,7 @@ router.post("/login", async (req, res) => {
   res
     .header("x-access-token", accessToken)
     .header("x-refresh-token", refreshToken)
-    .send(_.pick(user, ["_id", "name", "email"]));
+    .send(pickLoggedUserFields(user));
 });
 
 router.post("/refresh_token", async (req, res) => {
@@ -96,6 +89,12 @@ router.post("/refresh_token", async (req, res) => {
   await user.save();
 
   res.status(201).send({ accessToken, refreshToken });
+});
+
+router.get("/me", auth, async (req, res) => {
+  const me = await User.findById(req.user._id);
+
+  res.status(200).send(pickLoggedUserFields(me));
 });
 
 router.delete("/logout", async (req, res) => {
@@ -162,4 +161,12 @@ router.post("/new_password", async (req, res) => {
   res.status(202).send("Password changed.");
 });
 
+function validateCredentials(req) {
+  const schema = Joi.object({
+    email: Joi.string().email().min(5).max(255).required(),
+    password: Joi.string().min(8).max(1024).required(),
+  });
+
+  return schema.validate(req);
+}
 module.exports = router;
