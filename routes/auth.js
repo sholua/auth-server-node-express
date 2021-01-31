@@ -109,7 +109,7 @@ router.post("/reset_password", async (req, res) => {
   const { _id: userId, password: passwordHash, createdAt } = user;
   const secret = passwordHash + "-" + createdAt;
   const token = jwt.sign({ userId }, secret, {
-    expiresIn: "10m",
+    expiresIn: config.get("resetPasswordTokenTime"),
   });
 
   // url for React app
