@@ -4,7 +4,6 @@ const _ = require("lodash");
 const config = require("config");
 const jwt = require("jsonwebtoken");
 const { User, validate } = require("../models/user");
-const { Token } = require("../models/token");
 const {
   buildResetPasswordTemplate,
   transporter,
@@ -41,7 +40,8 @@ router.post("/register", async (req, res) => {
   await user.save();
   const accessToken = user.generateAccessToken();
   const refreshToken = user.generateRefreshToken();
-  await new Token({ token: refreshToken }).save();
+  user.refreshToken = refreshToken;
+  await user.save();
 
   res
     .header("x-access-token", accessToken)
@@ -62,7 +62,8 @@ router.post("/login", async (req, res) => {
 
   const accessToken = user.generateAccessToken();
   const refreshToken = user.generateRefreshToken();
-  await new Token({ token: refreshToken }).save();
+  user.refreshToken = refreshToken;
+  await user.save();
 
   res
     .header("x-access-token", accessToken)
@@ -75,26 +76,37 @@ router.post("/refresh_token", async (req, res) => {
   if (!refreshToken)
     return res.status(403).send("Access denied, token missing.");
 
-  const tokenDoc = await Token.findOne({ token: refreshToken });
-  if (!tokenDoc) return res.status(401).send("Token expired.");
-
   const { iat, exp, ...userPayload } = jwt.verify(
-    tokenDoc.token,
+    refreshToken,
     config.get("refreshTokenSecret")
   );
 
   const user = await User.findById(userPayload._id);
+  if (!user) return res.status(401).send("Invalid refresh token.");
+
+  if (user.refreshToken !== refreshToken) {
+    user.refreshToken = "";
+    await user.save();
+    return res.status(401).send("Refresh token was stolen.");
+  }
+
   const accessToken = user.generateAccessToken();
-  // refreshToken = user.generateRefreshToken();
-  // tokenDoc.token = refreshToken;
-  // await tokenDoc.save();
+  refreshToken = user.generateRefreshToken();
+  user.refreshToken = refreshToken;
+  await user.save();
 
   res.status(201).send({ accessToken, refreshToken });
 });
 
 router.delete("/logout", async (req, res) => {
   const { refreshToken } = req.body.params;
-  await Token.findOneAndDelete({ token: refreshToken });
+  const decodedRefreshToken = jwt.verify(
+    refreshToken,
+    config.get("refreshTokenSecret")
+  );
+  const user = await User.findById(decodedRefreshToken._id);
+  user.refreshToken = "";
+  await user.save();
 
   res.status(200).send("User logged out!");
 });
