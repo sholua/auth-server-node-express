@@ -50,7 +50,7 @@ router.post("/login", async (req, res) => {
   let user = await User.findOne({ email: req.body.email });
   if (!user) return res.status(400).send("Invalid email or password.");
 
-  const validPassword = user.validatePassword(req.body.password);
+  const validPassword = await user.validatePassword(req.body.password);
   if (!validPassword) return res.status(400).send("Invalid email or password.");
 
   const accessToken = user.generateAccessToken();
@@ -110,7 +110,7 @@ router.delete("/logout", async (req, res) => {
   res.status(200).send("User logged out!");
 });
 
-router.post("/reset_password", async (req, res) => {
+router.post("/forgot_password", async (req, res) => {
   const { email } = req.body;
 
   const user = await User.findOne({ email });
@@ -124,7 +124,7 @@ router.post("/reset_password", async (req, res) => {
   });
 
   // url for React app
-  const resetUrl = `${req.headers["x-forwarded-proto"]}://${req.headers.host}/new_password/${userId}/${token}`;
+  const resetUrl = `${req.headers["x-forwarded-proto"]}://${req.headers.host}/reset_password/${userId}/${token}`;
   const emailTemplate = buildResetPasswordTemplate(user, resetUrl);
 
   transporter.sendMail(emailTemplate, (err) => {
@@ -137,7 +137,7 @@ router.post("/reset_password", async (req, res) => {
   });
 });
 
-router.post("/new_password", async (req, res) => {
+router.post("/reset_password", async (req, res) => {
   const { userId, token, newPassword } = req.body;
 
   const user = await User.findById(userId);
