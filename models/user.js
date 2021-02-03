@@ -35,7 +35,7 @@ const userScheme = new mongoose.Schema(
 );
 
 userScheme.methods = {
-  validatePassword: async function (password) {
+  verifyPassword: async function (password) {
     return await bcrypt.compare(password, this.password);
   },
 
@@ -82,5 +82,14 @@ function validate(user) {
   return schema.validate(user);
 }
 
+function validatePassword(password) {
+  const schema = Joi.object({
+    newPassword: passwordComplexity().required().label("Password"),
+  });
+
+  return schema.validate(password);
+}
+
 exports.User = User;
 exports.validate = validate;
+exports.validatePassword = validatePassword;

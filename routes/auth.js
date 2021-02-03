@@ -3,27 +3,18 @@ const router = require("express").Router();
 const _ = require("lodash");
 const config = require("config");
 const jwt = require("jsonwebtoken");
-const { User, validate } = require("../models/user");
+const { User, validate, validatePassword } = require("../models/user");
+const { combineJoiErrorMessages } = require("../utilities/common");
+const { pickLoggedUserFields } = require("../utilities/user");
+const auth = require("../middleware/auth");
 const {
   buildResetPasswordTemplate,
   transporter,
 } = require("../utilities/email");
-const { pickLoggedUserFields } = require("../utilities/user");
-const auth = require("../middleware/auth");
 
 router.post("/register", async (req, res) => {
   const { error } = validate(req.body);
-  if (error) {
-    ////
-    const errors = {};
-    error.details.forEach((item) => {
-      if (!errors[item.context.key]) errors[item.context.key] = [item.message];
-      else errors[item.context.key].push(item.message);
-    });
-    ////
-
-    return res.status(400).send(errors);
-  }
+  if (error) return res.status(400).send(combineJoiErrorMessages(error));
 
   let user = await User.findOne({ email: req.body.email });
   if (user) return res.status(400).send("User already registered.");
@@ -50,7 +41,7 @@ router.post("/login", async (req, res) => {
   let user = await User.findOne({ email: req.body.email });
   if (!user) return res.status(400).send("Invalid email or password.");
 
-  const validPassword = await user.validatePassword(req.body.password);
+  const validPassword = await user.verifyPassword(req.body.password);
   if (!validPassword) return res.status(400).send("Invalid email or password.");
 
   const accessToken = user.generateAccessToken();
@@ -140,6 +131,9 @@ router.post("/forgot_password", async (req, res) => {
 router.post("/reset_password", async (req, res) => {
   const { userId, token, newPassword } = req.body;
 
+  const { error } = validatePassword({ newPassword });
+  if (error) return res.status(400).send(combineJoiErrorMessages(error));
+
   const user = await User.findById(userId);
   if (!user) return res.status(404).send("Invalid user.");
 
@@ -163,8 +157,8 @@ router.post("/reset_password", async (req, res) => {
 
 function validateCredentials(req) {
   const schema = Joi.object({
-    email: Joi.string().email().min(5).max(255).required(),
-    password: Joi.string().min(8).max(1024).required(),
+    email: Joi.string().email().max(255).required(),
+    password: Joi.string().max(1024).required(),
   });
 
   return schema.validate(req);
