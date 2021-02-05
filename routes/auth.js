@@ -17,7 +17,7 @@ router.post("/register", async (req, res) => {
   if (error) return res.status(400).send(combineJoiErrorMessages(error));
 
   let user = await User.findOne({ email: req.body.email });
-  if (user) return res.status(400).send("User already registered.");
+  if (user) return res.status(400).send({ email: "Email already registered." });
 
   user = new User(_.pick(req.body, ["name", "email", "password"]));
 
@@ -105,8 +105,7 @@ router.post("/forgot_password", async (req, res) => {
   const { email } = req.body;
 
   const user = await User.findOne({ email });
-  if (!user)
-    return res.status(404).send({ message: "No user with that email" });
+  if (!user) return res.status(404).send({ email: "No user with that email" });
 
   const { _id: userId, password: passwordHash, createdAt } = user;
   const secret = passwordHash + "-" + createdAt;
