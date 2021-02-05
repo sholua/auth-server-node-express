@@ -7,7 +7,7 @@ const bcrypt = require("bcrypt");
 
 const userScheme = new mongoose.Schema(
   {
-    name: {
+    firstName: {
       type: String,
       required: true,
       minlength: 4,
@@ -41,7 +41,7 @@ userScheme.methods = {
 
   generateAccessToken: function () {
     const accessToken = jwt.sign(
-      { _id: this._id, name: this.name },
+      { _id: this._id, firstName: this.firstName },
       config.get("accessTokenSecret"),
       {
         expiresIn: config.get("accessTokenTime"),
@@ -76,7 +76,7 @@ const User = mongoose.model("User", userScheme);
 
 function validate(user) {
   const schema = Joi.object({
-    name: Joi.string().min(4).max(50).required(),
+    firstName: Joi.string().min(4).max(50).required(),
     email: Joi.string().email().min(5).max(255).required(),
     password: passwordComplexity().required(),
   });

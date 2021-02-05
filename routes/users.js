@@ -4,7 +4,7 @@ const auth = require("../middleware/auth");
 const _ = require("lodash");
 
 router.get("/", auth, async (req, res) => {
-  const users = await User.find().select("_id name email");
+  const users = await User.find().select("_id firstName email");
   res.send(users);
 });
 
