@@ -6,11 +6,12 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "shol",
   "license": "ISC",
   "devDependencies": {
+    "jest": "^26.6.3",
     "nodemon": "^2.0.3"
   },
   "dependencies": {
@@ -27,6 +28,8 @@
     "lodash": "^4.17.15",
     "mongoose": "^5.9.7",
     "nodemailer": "^6.4.17",
+    "passport": "^0.4.1",
+    "passport-facebook-token": "^4.0.0",
     "winston": "^3.3.3"
   }
 }
