@@ -90,6 +90,8 @@ router.get("/me", auth, async (req, res) => {
 
 router.delete("/logout", async (req, res) => {
   const { refreshToken } = req.body.params;
+  if (!refreshToken) return res.status(401).send("No token provided.");
+
   const decodedRefreshToken = jwt.verify(
     refreshToken,
     config.get("refreshTokenSecret")

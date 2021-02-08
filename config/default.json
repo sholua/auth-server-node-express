@@ -1,4 +1,5 @@
 {
+    "mongoDb": "music-school",
     "accessTokenSecret": "",
     "refreshTokenSecret": "",
     "emailPassword": "",
