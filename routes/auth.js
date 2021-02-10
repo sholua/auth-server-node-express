@@ -106,6 +106,8 @@ router.delete("/logout", auth, async (req, res) => {
 router.post("/forgot_password", async (req, res) => {
   const { email } = req.body;
 
+  if (!email) return res.status(400).send("No email provided.");
+
   const user = await User.findOne({ email });
   if (!user) return res.status(404).send({ email: "No user with that email" });
 

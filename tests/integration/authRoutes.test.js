@@ -241,4 +241,49 @@ describe("/api/auth", () => {
       expect(res.status).toBe(401);
     });
   });
+
+  describe("POST /forgot_password", () => {
+    let user;
+    let email;
+
+    const exec = async () => {
+      return await request(server)
+        .post("/api/auth/forgot_password")
+        .send({ email });
+    };
+
+    beforeEach(async () => {
+      email = "test@test.com";
+
+      user = new User({
+        firstName: "Test",
+        email,
+        password: "123456qW!",
+      });
+
+      await user.save();
+    });
+
+    it("should return 200 if email sent", async () => {
+      const res = await exec();
+
+      expect(res.status).toBe(200);
+    });
+
+    it("shoul return 404 if no user found", async () => {
+      email = "wrong@test.com";
+
+      const res = await exec();
+
+      expect(res.status).toBe(404);
+    });
+
+    it("shoul return 400 if no email provided", async () => {
+      email = "";
+
+      const res = await exec();
+
+      expect(res.status).toBe(400);
+    });
+  });
 });
