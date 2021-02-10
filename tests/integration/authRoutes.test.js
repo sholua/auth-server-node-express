@@ -124,5 +124,34 @@ describe("/api/auth", () => {
     });
   });
 
-  describe("POST /refresh_token", () => {});
+  describe("POST /refresh_token", () => {
+    let user;
+    let refreshToken;
+
+    const exec = async () => {
+      return await request(server)
+        .post("/api/auth/refresh_token")
+        .send({ refreshToken });
+    };
+
+    beforeEach(async () => {
+      user = new User({
+        firstName: "Test",
+        email: "test@test.com",
+        password: "123456qW!",
+      });
+
+      refreshToken = user.generateRefreshToken();
+      user.refreshToken = refreshToken;
+      await user.save();
+    });
+
+    it("should return 201 if new access and refresh tokens created", async () => {
+      const res = await exec();
+
+      expect(res.status).toBe(201);
+      expect(res.body).toHaveProperty("accessToken");
+      expect(res.body).toHaveProperty("refreshToken");
+    });
+  });
 });
