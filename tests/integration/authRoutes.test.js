@@ -153,5 +153,51 @@ describe("/api/auth", () => {
       expect(res.body).toHaveProperty("accessToken");
       expect(res.body).toHaveProperty("refreshToken");
     });
+
+    it("should return 403 if not refreshToken provided", async () => {
+      refreshToken = "";
+
+      const res = await exec();
+
+      expect(res.status).toBe(403);
+    });
+
+    it("should return 401 if stolen refreshToken was used", async () => {
+      refreshToken = new User().generateRefreshToken();
+
+      const res = await exec();
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe("GET /me", () => {
+    let user;
+    let accessToken;
+
+    const exec = async () => {
+      return await request(server)
+        .get("/api/auth/me")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send();
+    };
+
+    beforeEach(async () => {
+      user = new User({
+        firstName: "Test",
+        email: "test@test.com",
+        password: "123456qW!",
+      });
+
+      user = await user.save();
+      accessToken = user.generateAccessToken();
+    });
+
+    it("should return current logged in user", async () => {
+      const res = await exec();
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("_id");
+    });
   });
 });
