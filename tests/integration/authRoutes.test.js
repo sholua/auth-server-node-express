@@ -123,4 +123,6 @@ describe("/api/auth", () => {
       expect(res.status).toBe(400);
     });
   });
+
+  describe("POST /refresh_token", () => {});
 });
