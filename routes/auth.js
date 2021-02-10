@@ -88,7 +88,7 @@ router.get("/me", auth, async (req, res) => {
   res.status(200).send(pickLoggedUserFields(me));
 });
 
-router.delete("/logout", async (req, res) => {
+router.delete("/logout", auth, async (req, res) => {
   const { refreshToken } = req.body.params;
   if (!refreshToken) return res.status(401).send("No token provided.");
 

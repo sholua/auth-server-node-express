@@ -200,4 +200,45 @@ describe("/api/auth", () => {
       expect(res.body).toHaveProperty("_id");
     });
   });
+
+  describe("DELETE /logout", () => {
+    let user;
+    let accessToken;
+    let refreshToken;
+
+    const exec = async () => {
+      return await request(server)
+        .delete("/api/auth/logout")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send({ params: { refreshToken } });
+    };
+
+    beforeEach(async () => {
+      user = new User({
+        firstName: "Test",
+        email: "test@test.com",
+        password: "123456qW!",
+      });
+
+      user = await user.save();
+      accessToken = user.generateAccessToken();
+      refreshToken = user.generateRefreshToken();
+      user.refreshToken = refreshToken;
+      await user.save();
+    });
+
+    it("should return 200 if user logged out", async () => {
+      const res = await exec();
+
+      expect(res.status).toBe(200);
+    });
+
+    it("should return 401 if no refresh token provided", async () => {
+      refreshToken = "";
+
+      const res = await exec();
+
+      expect(res.status).toBe(401);
+    });
+  });
 });
