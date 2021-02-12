@@ -286,4 +286,76 @@ describe("/api/auth", () => {
       expect(res.status).toBe(400);
     });
   });
+
+  describe("POST /reset_password", () => {
+    let user;
+    let userId;
+    let token;
+    let newPassword;
+
+    const exec = async () => {
+      return await request(server)
+        .post("/api/auth/reset_password")
+        .send({ userId, token, newPassword });
+    };
+
+    beforeEach(async () => {
+      user = new User({
+        firstName: "Test",
+        email: "test@test.com",
+        password: "123456qW!",
+      });
+
+      user = await user.save();
+      userId = user._id;
+      newPassword = "654321qW!";
+      token = user.generateResetPasswordToken();
+    });
+
+    it("should return 202 if password was changed", async () => {
+      const res = await exec();
+
+      expect(res.status).toBe(202);
+    });
+
+    it("should return 400 if invalid userId", async () => {
+      userId = "test";
+
+      const res = await exec();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if no token provided", async () => {
+      token = "";
+
+      const res = await exec();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if invalid reset password token", async () => {
+      token = "test";
+
+      const res = await exec();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if not new password provided", async () => {
+      newPassword = "";
+
+      const res = await exec();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if bad new password provided", async () => {
+      newPassword = "test";
+
+      const res = await exec();
+
+      expect(res.status).toBe(400);
+    });
+  });
 });

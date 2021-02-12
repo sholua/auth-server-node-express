@@ -3,6 +3,7 @@ const router = require("express").Router();
 const _ = require("lodash");
 const config = require("config");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const { User, validate, validatePassword } = require("../models/user");
 const { combineJoiErrorMessages } = require("../utilities/common");
 const { pickLoggedUserFields } = require("../utilities/user");
@@ -111,14 +112,9 @@ router.post("/forgot_password", async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) return res.status(404).send({ email: "No user with that email" });
 
-  const { _id: userId, password: passwordHash, createdAt } = user;
-  const secret = passwordHash + "-" + createdAt;
-  const token = jwt.sign({ userId }, secret, {
-    expiresIn: config.get("resetPasswordTokenTime"),
-  });
-
-  // url for React app
-  const resetUrl = `${req.headers["x-forwarded-proto"]}://${req.headers.host}/reset_password/${userId}/${token}`;
+  // // url for React app
+  const token = user.generateResetPasswordToken();
+  const resetUrl = `${req.headers["x-forwarded-proto"]}://${req.headers.host}/reset_password/${user._id}/${token}`;
   const emailTemplate = buildResetPasswordTemplate(user, resetUrl);
 
   transporter.sendMail(emailTemplate, (err) => {
@@ -133,6 +129,9 @@ router.post("/forgot_password", async (req, res) => {
 
 router.post("/reset_password", async (req, res) => {
   const { userId, token, newPassword } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(userId))
+    return res.status(400).send("Invalid user id");
 
   const { error } = validatePassword({ newPassword });
   if (error) return res.status(400).send(combineJoiErrorMessages(error));

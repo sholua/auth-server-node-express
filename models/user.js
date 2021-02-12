@@ -62,6 +62,16 @@ userScheme.methods = {
 
     return refreshToken;
   },
+
+  generateResetPasswordToken: function () {
+    const userId = this._id;
+    const secret = `${this.password}-${this.createdAt}`;
+    const token = jwt.sign({ userId }, secret, {
+      expiresIn: config.get("resetPasswordTokenTime"),
+    });
+
+    return token;
+  },
 };
 
 userScheme.pre("save", async function (next) {
