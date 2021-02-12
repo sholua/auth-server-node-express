@@ -162,6 +162,14 @@ describe("/api/auth", () => {
       expect(res.status).toBe(403);
     });
 
+    it("should return 401 if invalid refresh token provided", async () => {
+      refreshToken = new User().generateRefreshToken();
+
+      const res = await exec();
+
+      expect(res.status).toBe(401);
+    });
+
     it("should return 401 if stolen refreshToken was used", async () => {
       refreshToken = new User().generateRefreshToken();
 
