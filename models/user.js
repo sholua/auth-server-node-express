@@ -4,11 +4,10 @@ const passwordComplexity = require("joi-password-complexity").default;
 const config = require("config");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { Token } = require("./token");
 
 const userScheme = new mongoose.Schema(
   {
-    name: {
+    firstName: {
       type: String,
       required: true,
       minlength: 4,
@@ -28,39 +27,56 @@ const userScheme = new mongoose.Schema(
       minlength: 8,
       maxlength: 1024,
     },
+    refreshToken: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
 
 userScheme.methods = {
+  verifyPassword: async function (password) {
+    return await bcrypt.compare(password, this.password);
+  },
+
   generateAccessToken: function () {
     const accessToken = jwt.sign(
-      { _id: this._id },
+      { _id: this._id, firstName: this.firstName },
       config.get("accessTokenSecret"),
       {
-        expiresIn: "10m",
+        expiresIn: config.get("accessTokenTime"),
       }
     );
 
     return accessToken;
   },
 
-  generateRefreshToken: async function () {
+  generateRefreshToken: function () {
     const refreshToken = jwt.sign(
       { _id: this._id },
       config.get("refreshTokenSecret"),
       {
-        expiresIn: "1d",
+        expiresIn: config.get("refreshTokenTime"),
       }
     );
 
-    await new Token({ token: refreshToken }).save();
-
     return refreshToken;
+  },
+
+  generateResetPasswordToken: function () {
+    const userId = this._id;
+    const secret = `${this.password}-${this.createdAt}`;
+    const token = jwt.sign({ userId }, secret, {
+      expiresIn: config.get("resetPasswordTokenTime"),
+    });
+
+    return token;
   },
 };
 
 userScheme.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   return next();
@@ -68,9 +84,9 @@ userScheme.pre("save", async function (next) {
 
 const User = mongoose.model("User", userScheme);
 
-function validateUser(user) {
+function validate(user) {
   const schema = Joi.object({
-    name: Joi.string().min(4).max(50).required(),
+    firstName: Joi.string().min(4).max(50).required(),
     email: Joi.string().email().min(5).max(255).required(),
     password: passwordComplexity().required(),
   });
@@ -78,5 +94,14 @@ function validateUser(user) {
   return schema.validate(user);
 }
 
+function validatePassword(password) {
+  const schema = Joi.object({
+    newPassword: passwordComplexity().required().label("Password"),
+  });
+
+  return schema.validate(password);
+}
+
 exports.User = User;
-exports.validate = validateUser;
+exports.validate = validate;
+exports.validatePassword = validatePassword;

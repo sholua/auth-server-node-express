@@ -1,5 +1,9 @@
 {
+    "mongoDb": "music-school",
     "accessTokenSecret": "",
     "refreshTokenSecret": "",
-    "emailPassword": ""
+    "emailPassword": "",
+    "accessTokenTime": "10m", 
+    "refreshTokenTime": "1d",
+    "resetPasswordTokenTime": "10m"
 }

@@ -1,34 +1,38 @@
 const Joi = require("joi");
-const bcrypt = require("bcrypt");
 const router = require("express").Router();
 const _ = require("lodash");
 const config = require("config");
 const jwt = require("jsonwebtoken");
-const { User, validate: validateUser } = require("../models/user");
-const { Token } = require("../models/token");
+const mongoose = require("mongoose");
+const { User, validate, validatePassword } = require("../models/user");
+const { combineJoiErrorMessages } = require("../utilities/common");
+const { pickLoggedUserFields } = require("../utilities/user");
+const auth = require("../middleware/auth");
 const {
   buildResetPasswordTemplate,
   transporter,
 } = require("../utilities/email");
 
-router.post("/signup", async (req, res) => {
-  const { error } = validateUser(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
+router.post("/register", async (req, res) => {
+  const { error } = validate(req.body);
+  if (error) return res.status(400).send(combineJoiErrorMessages(error));
 
   let user = await User.findOne({ email: req.body.email });
-  if (user) return res.status(400).send("User already registered.");
+  if (user) return res.status(400).send({ email: "Email already registered." });
 
-  user = new User(_.pick(req.body, ["name", "email", "password"]));
+  user = new User(_.pick(req.body, ["firstName", "email", "password"]));
 
   await user.save();
   const accessToken = user.generateAccessToken();
-  const refreshToken = await user.generateRefreshToken();
+  const refreshToken = user.generateRefreshToken();
+  user.refreshToken = refreshToken;
+  await user.save();
 
   res
     .header("x-access-token", accessToken)
     .header("x-refresh-token", refreshToken)
     .status(201)
-    .send({ user: _.pick(user, ["_id", "name", "email"]) });
+    .send(pickLoggedUserFields(user));
 });
 
 router.post("/login", async (req, res) => {
@@ -38,68 +42,79 @@ router.post("/login", async (req, res) => {
   let user = await User.findOne({ email: req.body.email });
   if (!user) return res.status(400).send("Invalid email or password.");
 
-  const validPassword = await bcrypt.compare(req.body.password, user.password);
+  const validPassword = await user.verifyPassword(req.body.password);
   if (!validPassword) return res.status(400).send("Invalid email or password.");
 
   const accessToken = user.generateAccessToken();
-  const refreshToken = await user.generateRefreshToken();
+  const refreshToken = user.generateRefreshToken();
+  user.refreshToken = refreshToken;
+  await user.save();
 
   res
     .header("x-access-token", accessToken)
     .header("x-refresh-token", refreshToken)
-    .send({ user: _.pick(user, ["_id", "name", "email"]) });
+    .send(pickLoggedUserFields(user));
 });
 
 router.post("/refresh_token", async (req, res) => {
-  const { refreshToken } = req.body;
+  let { refreshToken } = req.body;
   if (!refreshToken)
-    return res.status(403).send("Access denied, token missing!");
-
-  const tokenDoc = await Token.findOne({ token: refreshToken });
-  if (!tokenDoc) return res.status(401).send("Token expired!");
+    return res.status(403).send("Access denied, token missing.");
 
   const { iat, exp, ...userPayload } = jwt.verify(
-    tokenDoc.token,
+    refreshToken,
     config.get("refreshTokenSecret")
   );
-  const accessToken = jwt.sign(userPayload, config.get("accessTokenSecret"), {
-    expiresIn: "10m",
-  });
 
-  res.status(200).send({ accessToken });
+  const user = await User.findById(userPayload._id);
+  if (!user) return res.status(401).send("Invalid refresh token.");
+
+  if (user.refreshToken !== refreshToken) {
+    user.refreshToken = "";
+    await user.save();
+    return res.status(401).send("Refresh token was stolen.");
+  }
+
+  const accessToken = user.generateAccessToken();
+  refreshToken = user.generateRefreshToken();
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  res.status(201).send({ accessToken, refreshToken });
 });
 
-router.delete("/logout", async (req, res) => {
-  const { refreshToken } = req.body;
-  await Token.findOneAndDelete({ token: refreshToken });
+router.get("/me", auth, async (req, res) => {
+  const me = await User.findById(req.user._id);
 
-  res.status(200).send({ message: "User logged out!" });
+  res.status(200).send(pickLoggedUserFields(me));
 });
 
-function validateCredentials(req) {
-  const schema = Joi.object({
-    email: Joi.string().email().min(5).max(255).required(),
-    password: Joi.string().min(8).max(1024).required(),
-  });
+router.delete("/logout", auth, async (req, res) => {
+  const { refreshToken } = req.body.params;
+  if (!refreshToken) return res.status(401).send("No token provided.");
 
-  return schema.validate(req);
-}
+  const decodedRefreshToken = jwt.verify(
+    refreshToken,
+    config.get("refreshTokenSecret")
+  );
+  const user = await User.findById(decodedRefreshToken._id);
+  user.refreshToken = "";
+  await user.save();
 
-router.post("/reset_password", async (req, res) => {
+  res.status(200).send("User logged out!");
+});
+
+router.post("/forgot_password", async (req, res) => {
   const { email } = req.body;
 
+  if (!email) return res.status(400).send("No email provided.");
+
   const user = await User.findOne({ email });
-  if (!user)
-    return res.status(404).send({ message: "No user with that email" });
+  if (!user) return res.status(404).send({ email: "No user with that email" });
 
-  const { _id: userId, password: passwordHash, createdAt } = user;
-  const secret = passwordHash + "-" + createdAt;
-  const token = jwt.sign({ userId }, secret, {
-    expiresIn: "10m",
-  });
-
-  // url for React app
-  const resetUrl = `${req.headers["x-forwarded-proto"]}://${req.headers.host}/new_password/${userId}/${token}`;
+  // // url for React app
+  const token = user.generateResetPasswordToken();
+  const resetUrl = `${req.headers["x-forwarded-proto"]}://${req.headers.host}/reset_password/${user._id}/${token}`;
   const emailTemplate = buildResetPasswordTemplate(user, resetUrl);
 
   transporter.sendMail(emailTemplate, (err) => {
@@ -112,8 +127,14 @@ router.post("/reset_password", async (req, res) => {
   });
 });
 
-router.post("/new_password", async (req, res) => {
+router.post("/reset_password", async (req, res) => {
   const { userId, token, newPassword } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(userId))
+    return res.status(400).send("Invalid user id");
+
+  const { error } = validatePassword({ newPassword });
+  if (error) return res.status(400).send(combineJoiErrorMessages(error));
 
   const user = await User.findById(userId);
   if (!user) return res.status(404).send("Invalid user.");
@@ -136,4 +157,12 @@ router.post("/new_password", async (req, res) => {
   res.status(202).send("Password changed.");
 });
 
+function validateCredentials(req) {
+  const schema = Joi.object({
+    email: Joi.string().email().max(255).required(),
+    password: Joi.string().max(1024).required(),
+  });
+
+  return schema.validate(req);
+}
 module.exports = router;
