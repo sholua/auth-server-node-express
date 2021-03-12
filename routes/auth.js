@@ -87,9 +87,9 @@ router.get(
   "/me",
   passport.authenticate(["jwt"], { session: false }),
   async (req, res) => {
-    const me = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id);
 
-    res.status(200).send(pickLoggedUserFields(me));
+    res.status(200).send(pickLoggedUserFields(user));
   }
 );
 
@@ -164,6 +164,27 @@ router.post("/reset_password", async (req, res) => {
 
   res.status(202).send("Password changed.");
 });
+
+router.get(
+  "/google",
+  passport.authenticate("google", {
+    session: false,
+    scope: ["profile", "email"],
+  })
+);
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  async function (req, res) {
+    const accessToken = req.user.generateAccessToken();
+    const refreshToken = req.user.generateRefreshToken();
+    req.user.refreshToken = refreshToken;
+    await req.user.save();
+
+    res.render("authenticated.html", { accessToken, refreshToken });
+  }
+);
 
 function validateCredentials(req) {
   const schema = Joi.object({

@@ -186,7 +186,7 @@ describe("/api/auth", () => {
     const exec = async () => {
       return await request(server)
         .get("/api/auth/me")
-        .set("Authorization", `Bearer ${accessToken}`)
+        .set("Authorization", `JWT ${accessToken}`)
         .send();
     };
 
@@ -217,7 +217,7 @@ describe("/api/auth", () => {
     const exec = async () => {
       return await request(server)
         .delete("/api/auth/logout")
-        .set("Authorization", `Bearer ${accessToken}`)
+        .set("Authorization", `JWT ${accessToken}`)
         .send({ params: { refreshToken } });
     };
 

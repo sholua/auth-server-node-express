@@ -9,11 +9,7 @@ const jwtOptions = {
 };
 
 passport.use(
-  new passportJwt.Strategy(jwtOptions, (payload, done) => {
-    const user = User.findById(payload._id);
-
-    if (user) return done(null, user, payload);
-
-    return done();
+  new passportJwt.Strategy(jwtOptions, async (payload, done) => {
+    return done(null, payload);
   })
 );
