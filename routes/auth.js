@@ -1,3 +1,4 @@
+const passport = require("passport");
 const Joi = require("joi");
 const router = require("express").Router();
 const _ = require("lodash");
@@ -7,7 +8,6 @@ const mongoose = require("mongoose");
 const { User, validate, validatePassword } = require("../models/user");
 const { combineJoiErrorMessages } = require("../utilities/common");
 const { pickLoggedUserFields } = require("../utilities/user");
-const auth = require("../middleware/auth");
 const {
   buildResetPasswordTemplate,
   transporter,
@@ -83,26 +83,34 @@ router.post("/refresh_token", async (req, res) => {
   res.status(201).send({ accessToken, refreshToken });
 });
 
-router.get("/me", auth, async (req, res) => {
-  const me = await User.findById(req.user._id);
+router.get(
+  "/me",
+  passport.authenticate(["jwt"], { session: false }),
+  async (req, res) => {
+    const me = await User.findById(req.user._id);
 
-  res.status(200).send(pickLoggedUserFields(me));
-});
+    res.status(200).send(pickLoggedUserFields(me));
+  }
+);
 
-router.delete("/logout", auth, async (req, res) => {
-  const { refreshToken } = req.body.params;
-  if (!refreshToken) return res.status(401).send("No token provided.");
+router.delete(
+  "/logout",
+  passport.authenticate(["jwt"], { session: false }),
+  async (req, res) => {
+    const { refreshToken } = req.body.params;
+    if (!refreshToken) return res.status(401).send("No token provided.");
 
-  const decodedRefreshToken = jwt.verify(
-    refreshToken,
-    config.get("refreshTokenSecret")
-  );
-  const user = await User.findById(decodedRefreshToken._id);
-  user.refreshToken = "";
-  await user.save();
+    const decodedRefreshToken = jwt.verify(
+      refreshToken,
+      config.get("refreshTokenSecret")
+    );
+    const user = await User.findById(decodedRefreshToken._id);
+    user.refreshToken = "";
+    await user.save();
 
-  res.status(200).send("User logged out!");
-});
+    res.status(200).send("User logged out!");
+  }
+);
 
 router.post("/forgot_password", async (req, res) => {
   const { email } = req.body;

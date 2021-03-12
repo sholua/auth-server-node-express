@@ -6,6 +6,7 @@ require("./startup/config")();
 require("./startup/db")();
 require("./startup/logging")();
 require("./startup/validation")();
+require("./startup/passport")(app);
 require("./startup/routes")(app);
 
 let port;

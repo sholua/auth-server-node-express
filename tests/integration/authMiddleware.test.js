@@ -16,7 +16,7 @@ describe("auth middleware", () => {
   const exec = () => {
     return request(server)
       .get("/api/users")
-      .set("Authorization", `Bearer ${accessToken}`);
+      .set("Authorization", `JWT ${accessToken}`);
   };
 
   beforeEach(() => {
@@ -36,7 +36,7 @@ describe("auth middleware", () => {
 
     const res = await exec();
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(401);
   });
 
   it("should return 200 if token is valid", async () => {
