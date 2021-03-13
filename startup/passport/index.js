@@ -3,6 +3,7 @@ const mustacheExpress = require("mustache-express");
 
 require("./jwt");
 require("./google");
+require("./facebook");
 
 // TODO: make config for mustache in separate startup file
 module.exports = function (app) {

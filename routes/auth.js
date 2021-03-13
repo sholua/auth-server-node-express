@@ -186,6 +186,26 @@ router.get(
   }
 );
 
+router.get(
+  "/facebook",
+  passport.authenticate("facebook", {
+    session: false,
+  })
+);
+
+router.get(
+  "/facebook/callback",
+  passport.authenticate("facebook", { session: false }),
+  async function (req, res) {
+    const accessToken = req.user.generateAccessToken();
+    const refreshToken = req.user.generateRefreshToken();
+    req.user.refreshToken = refreshToken;
+    await req.user.save();
+
+    res.render("authenticated.html", { accessToken, refreshToken });
+  }
+);
+
 function validateCredentials(req) {
   const schema = Joi.object({
     email: Joi.string().email().max(255).required(),
