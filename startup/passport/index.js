@@ -1,6 +1,7 @@
 const passport = require("passport");
 const mustacheExpress = require("mustache-express");
 
+require("./local");
 require("./jwt");
 require("./google");
 require("./facebook");

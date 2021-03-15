@@ -90,7 +90,7 @@ describe("/api/auth", () => {
       expect(res.body).toHaveProperty("firstName", "Test");
     });
 
-    it("should return 400 if credentials are not valid", async () => {
+    it("should return 401 if credentials are not valid", async () => {
       credentials = {
         email: "e",
         password: "p",
@@ -98,10 +98,10 @@ describe("/api/auth", () => {
 
       const res = await exec();
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(401);
     });
 
-    it("should return 400 if invalid email", async () => {
+    it("should return 401 if invalid email", async () => {
       credentials = {
         email: "test2@test.com",
         password: "123456qW!",
@@ -109,10 +109,10 @@ describe("/api/auth", () => {
 
       const res = await exec();
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(401);
     });
 
-    it("should return 400 if invalid password", async () => {
+    it("should return 401 if invalid password", async () => {
       credentials = {
         email: "test@test.com",
         password: "123456qW!!!",
@@ -120,7 +120,7 @@ describe("/api/auth", () => {
 
       const res = await exec();
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(401);
     });
   });
 

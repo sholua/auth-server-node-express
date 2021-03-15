@@ -1,5 +1,4 @@
 const passport = require("passport");
-const Joi = require("joi");
 const router = require("express").Router();
 const _ = require("lodash");
 const config = require("config");
@@ -35,25 +34,28 @@ router.post("/register", async (req, res) => {
     .send(pickLoggedUserFields(user));
 });
 
-router.post("/login", async (req, res) => {
-  const { error } = validateCredentials(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
+router.post("/login", async (req, res, next) => {
+  passport.authenticate(
+    "local-login",
+    { session: false },
+    async (err, user, info) => {
+      if (err) return res.status(401).send("Error");
 
-  let user = await User.findOne({ email: req.body.email });
-  if (!user) return res.status(400).send("Invalid email or password.");
+      if (!user) {
+        return res.status(401).send(info.message);
+      }
 
-  const validPassword = await user.verifyPassword(req.body.password);
-  if (!validPassword) return res.status(400).send("Invalid email or password.");
+      const accessToken = user.generateAccessToken();
+      const refreshToken = user.generateRefreshToken();
+      user.refreshToken = refreshToken;
+      await user.save();
 
-  const accessToken = user.generateAccessToken();
-  const refreshToken = user.generateRefreshToken();
-  user.refreshToken = refreshToken;
-  await user.save();
-
-  res
-    .header("x-access-token", accessToken)
-    .header("x-refresh-token", refreshToken)
-    .send(pickLoggedUserFields(user));
+      res
+        .header("x-access-token", accessToken)
+        .header("x-refresh-token", refreshToken)
+        .send(pickLoggedUserFields(user));
+    }
+  )(req, res, next);
 });
 
 router.post("/refresh_token", async (req, res) => {
@@ -206,12 +208,4 @@ router.get(
   }
 );
 
-function validateCredentials(req) {
-  const schema = Joi.object({
-    email: Joi.string().email().max(255).required(),
-    password: Joi.string().max(1024).required(),
-  });
-
-  return schema.validate(req);
-}
 module.exports = router;
