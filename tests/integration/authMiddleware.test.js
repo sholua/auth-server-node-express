@@ -20,7 +20,7 @@ describe("auth middleware", () => {
   };
 
   beforeEach(() => {
-    accessToken = new User().generateAccessToken();
+    accessToken = new User({ role: "admin" }).generateAccessToken();
   });
 
   it("should return 401 if no access token was provided", async () => {
