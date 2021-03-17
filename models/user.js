@@ -5,6 +5,7 @@ const config = require("config");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
+// TODO: make user schema with google and facebook info
 const userScheme = new mongoose.Schema(
   {
     firstName: {
@@ -23,7 +24,6 @@ const userScheme = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
       minlength: 8,
       maxlength: 1024,
     },
