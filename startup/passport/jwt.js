@@ -10,6 +10,6 @@ const jwtOptions = {
 
 passport.use(
   new passportJwt.Strategy(jwtOptions, async (payload, done) => {
-    return done(null, payload);
+    if (payload._id) return done(null, payload);
   })
 );

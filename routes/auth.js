@@ -1,10 +1,9 @@
 const passport = require("passport");
 const router = require("express").Router();
-const _ = require("lodash");
 const config = require("config");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
-const { User, validate, validatePassword } = require("../models/user");
+const { User, validatePassword } = require("../models/user");
 const { combineJoiErrorMessages } = require("../utilities/common");
 const { pickLoggedUserFields } = require("../utilities/user");
 const {
@@ -12,26 +11,29 @@ const {
   transporter,
 } = require("../utilities/email");
 
-router.post("/register", async (req, res) => {
-  const { error } = validate(req.body);
-  if (error) return res.status(400).send(combineJoiErrorMessages(error));
+router.post("/register", async (req, res, next) => {
+  passport.authenticate(
+    "local-register",
+    { session: false },
+    async (err, user, info) => {
+      if (err) return res.status(500).send("Error");
 
-  let user = await User.findOne({ email: req.body.email });
-  if (user) return res.status(400).send({ email: "Email already registered." });
+      if (!user && info) {
+        return res.status(400).send(info);
+      }
 
-  user = new User(_.pick(req.body, ["firstName", "email", "password"]));
+      const accessToken = user.generateAccessToken();
+      const refreshToken = user.generateRefreshToken();
+      user.refreshToken = refreshToken;
+      await user.save();
 
-  await user.save();
-  const accessToken = user.generateAccessToken();
-  const refreshToken = user.generateRefreshToken();
-  user.refreshToken = refreshToken;
-  await user.save();
-
-  res
-    .header("x-access-token", accessToken)
-    .header("x-refresh-token", refreshToken)
-    .status(201)
-    .send(pickLoggedUserFields(user));
+      res
+        .header("x-access-token", accessToken)
+        .header("x-refresh-token", refreshToken)
+        .status(201)
+        .send(pickLoggedUserFields(user));
+    }
+  )(req, res, next);
 });
 
 router.post("/login", async (req, res, next) => {
