@@ -27,6 +27,11 @@ const userScheme = new mongoose.Schema(
       minlength: 8,
       maxlength: 1024,
     },
+    role: {
+      type: String,
+      default: "basic",
+      enum: ["basic", "pupil", "teacher", "admin"],
+    },
     refreshToken: {
       type: String,
     },
@@ -41,7 +46,7 @@ userScheme.methods = {
 
   generateAccessToken: function () {
     const accessToken = jwt.sign(
-      { _id: this._id, firstName: this.firstName },
+      { _id: this._id, firstName: this.firstName, role: this.role },
       config.get("accessTokenSecret"),
       {
         expiresIn: config.get("accessTokenTime"),
