@@ -2,6 +2,8 @@ const winston = require("winston");
 const express = require("express");
 const app = express();
 
+global.__basedir = __dirname;
+
 require("./startup/config")();
 require("./startup/db")();
 require("./startup/logging")();
