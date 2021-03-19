@@ -1,6 +1,5 @@
 const { User } = require("../models/user");
 const router = require("express").Router();
-const _ = require("lodash");
 const passport = require("passport");
 const grantAccess = require("../middleware/grantAccess");
 
