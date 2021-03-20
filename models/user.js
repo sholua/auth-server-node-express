@@ -42,6 +42,7 @@ const userScheme = new mongoose.Schema(
       default: "basic",
       enum: ["basic", "pupil", "teacher", "admin"],
     },
+    avatar: String,
     refreshToken: {
       type: String,
     },
