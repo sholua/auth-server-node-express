@@ -10,6 +10,7 @@ require("./startup/logging")();
 require("./startup/validation")();
 require("./startup/passport")(app);
 require("./startup/routes")(app);
+require("./startup/swagger")(app);
 
 let port;
 if (process.env.NODE_ENV !== "test") {
