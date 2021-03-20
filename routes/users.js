@@ -7,6 +7,15 @@ const grantAccess = require("../middleware/grantAccess");
  * @swagger
  * /api/users:
  *  get:
+ *    summary: Get list of users
+ *    tags:
+ *      - Users
+ *    parameters:
+ *      - in: header
+ *        name: Authorization
+ *        type: string
+ *        required: true
+ *        example: JWT xxxxxAccessTokenxxxxx
  *    description: Get all users
  *    responses:
  *      '200':
