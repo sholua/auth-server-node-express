@@ -104,7 +104,7 @@ router.post(
         return res.status(400).send("File size cannot be larger than 2MB!");
       }
 
-      res.status(500).send(err);
+      res.status(400).send(err);
     }
   }
 );
@@ -122,11 +122,6 @@ router.post(
  *        schema:
  *          type: string
  *        required: true
- *      - in: header
- *        name: Authorization
- *        type: string
- *        required: true
- *        example: JWT xxxxxAccessTokenxxxxx
  *    responses:
  *      '200':
  *        description: Download avatar
@@ -137,20 +132,16 @@ router.post(
  *      '5xx':
  *        description: Unexpected error.
  */
-router.get(
-  "/avatar/:name",
-  passport.authenticate(["jwt"], { session: false }),
-  (req, res) => {
-    const fileName = req.params.name;
-    const directoryPath = __basedir + "/uploads/";
+router.get("/avatar/:name", (req, res) => {
+  const fileName = req.params.name;
+  const directoryPath = __basedir + "/uploads/";
 
-    res.download(directoryPath + fileName, fileName, (err) => {
-      if (err) {
-        // There is no file
-        res.status(400).send(`Could not download the file.`);
-      }
-    });
-  }
-);
+  res.download(directoryPath + fileName, fileName, (err) => {
+    if (err) {
+      // There is no file
+      res.status(400).send(`Could not download the file.`);
+    }
+  });
+});
 
 module.exports = router;

@@ -43,6 +43,14 @@ describe("/api/profile", () => {
   describe("POST /upload/avatar", () => {
     let accessToken;
     let avatar;
+    let filePath;
+
+    const exec = async () => {
+      return await request(server)
+        .post("/api/profile/upload/avatar")
+        .set("Authorization", `JWT ${accessToken}`)
+        .attach("avatar", filePath);
+    };
 
     beforeEach(async () => {
       const userCredentials = {
@@ -54,6 +62,7 @@ describe("/api/profile", () => {
 
       const user = new User(userCredentials);
       accessToken = user.generateAccessToken();
+      filePath = `${__dirname}/testFiles/test.jpg`;
       await user.save();
     });
 
@@ -65,12 +74,7 @@ describe("/api/profile", () => {
     });
 
     it("should upload/download jpg image", async () => {
-      const filePath = `${__dirname}/testFiles/test.jpg`;
-
-      const res = await request(server)
-        .post("/api/profile/upload/avatar")
-        .set("Authorization", `JWT ${accessToken}`)
-        .attach("avatar", filePath);
+      const res = await exec();
 
       avatar = res.body.avatar;
       expect(res.status).toBe(200);
@@ -83,10 +87,17 @@ describe("/api/profile", () => {
     });
 
     it("should not upload with empty avatar field of the form", async () => {
-      const res = await request(server)
-        .post("/api/profile/upload/avatar")
-        .set("Authorization", `JWT ${accessToken}`)
-        .attach("avatar", "");
+      filePath = "";
+
+      const res = await exec();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should not upload file with wrong extention", async () => {
+      filePath = `${__dirname}/testFiles/test.txt`;
+
+      const res = await exec();
 
       expect(res.status).toBe(400);
     });
