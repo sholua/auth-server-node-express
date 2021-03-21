@@ -5,7 +5,7 @@ const grantAccess = require("../middleware/grantAccess");
 const uploadImage = require("../middleware/upload");
 const config = require("config");
 const fs = require("fs");
-
+const { resizeImage } = require("../utilities/common");
 /**
  * @swagger
  * /api/profile/{id}:
@@ -122,6 +122,13 @@ router.post(
  *        schema:
  *          type: string
  *        required: true
+ *      - in: query
+ *        name: width
+ *      - in: query
+ *        name: height
+ *      - in: query
+ *        name: format
+ *        default: jpg
  *    responses:
  *      '200':
  *        description: Download avatar
@@ -135,6 +142,22 @@ router.post(
 router.get("/avatar/:name", (req, res) => {
   const fileName = req.params.name;
   const directoryPath = __basedir + "/uploads/";
+
+  const widthString = req.query.width;
+  const heightString = req.query.height;
+  const format = req.query.format;
+  if (widthString || heightString) {
+    // Set the content-type of the response
+    res.type(`image/${format || "jpg"}`);
+
+    // Get the resized image
+    return resizeImage(
+      directoryPath + fileName,
+      format,
+      widthString,
+      heightString
+    ).pipe(res);
+  }
 
   res.download(directoryPath + fileName, fileName, (err) => {
     if (err) {
