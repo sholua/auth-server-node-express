@@ -69,7 +69,7 @@ router.get(
  *        description: Image to upload (jpg, jpeg, png)
  *    responses:
  *      '200':
- *        description: Avant was uploaded
+ *        description: User with new avatar
  *      '401':
  *        description: Authorization information is missing or invalid
  *      '5xx':
