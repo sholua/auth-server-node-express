@@ -5,5 +5,6 @@
     "emailPassword": "",
     "accessTokenTime": "10m", 
     "refreshTokenTime": "1d",
-    "resetPasswordTokenTime": "10m"
+    "resetPasswordTokenTime": "10m",
+    "userSensitiveFields": "-password -refreshToken -__v"
 }

@@ -11,6 +11,34 @@ const {
   transporter,
 } = require("../utilities/email");
 
+/**
+ * @swagger
+ * /api/auth/register:
+ *  post:
+ *    summary: Register new user
+ *    tags:
+ *      - Authorization
+ *    parameters:
+ *      - in: body
+ *        name: firstName
+ *        type: string
+ *        required: true
+ *      - in: body
+ *        name: email
+ *        type: string
+ *        required: true
+ *      - in: body
+ *        name: password
+ *        type: string
+ *        required: true
+ *    responses:
+ *      '201':
+ *        description: New user was created
+ *      '400':
+ *        description: Wrong information in register form
+ *      '5xx':
+ *        description: Unexpected error.
+ */
 router.post("/register", async (req, res, next) => {
   passport.authenticate(
     "local-register",
@@ -36,6 +64,30 @@ router.post("/register", async (req, res, next) => {
   )(req, res, next);
 });
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *  post:
+ *    summary: Login user
+ *    tags:
+ *      - Authorization
+ *    parameters:
+ *      - in: body
+ *        name: email
+ *        type: string
+ *        required: true
+ *      - in: body
+ *        name: password
+ *        type: string
+ *        required: true
+ *    responses:
+ *      '200':
+ *        description: User logged in
+ *      '401':
+ *        description: Wrong credentials
+ *      '5xx':
+ *        description: Unexpected error.
+ */
 router.post("/login", async (req, res, next) => {
   passport.authenticate(
     "local-login",
@@ -60,6 +112,26 @@ router.post("/login", async (req, res, next) => {
   )(req, res, next);
 });
 
+/**
+ * @swagger
+ * /api/auth/refersh_token:
+ *  post:
+ *    summary: Refresh token
+ *    tags:
+ *      - Authorization
+ *    parameters:
+ *      - in: body
+ *        name: refreshToken
+ *        type: string
+ *        required: true
+ *    responses:
+ *      '201':
+ *        description: New refresh token was created
+ *      '401':
+ *        description: Invalid refresh token
+ *      '5xx':
+ *        description: Unexpected error
+ */
 router.post("/refresh_token", async (req, res) => {
   let { refreshToken } = req.body;
   if (!refreshToken)
@@ -87,6 +159,28 @@ router.post("/refresh_token", async (req, res) => {
   res.status(201).send({ accessToken, refreshToken });
 });
 
+/**
+ * @swagger
+ * /api/auth/me:
+ *  get:
+ *    summary: Get current logged in user
+ *    tags:
+ *      - Authorization
+ *    parameters:
+ *      - in: header
+ *        name: Authorization
+ *        description: Access token
+ *        type: string
+ *        required: true
+ *        example: JWT xxxxxAccessTokenxxxxx
+ *    responses:
+ *      '200':
+ *        description: Current user info
+ *      '401':
+ *        description: Invalid access token
+ *      '5xx':
+ *        description: Unexpected error
+ */
 router.get(
   "/me",
   passport.authenticate(["jwt"], { session: false }),
@@ -97,6 +191,25 @@ router.get(
   }
 );
 
+/**
+ * @swagger
+ * /api/auth/logout:
+ *  delete:
+ *    summary: Logout current user
+ *    tags:
+ *      - Authorization
+ *    parameters:
+ *      - in: bodyParams
+ *        name: refreshToken
+ *        type: string
+ *        required: true
+ *        description: Refresh token
+ *    responses:
+ *      '200':
+ *        description: User logged out
+ *      '401':
+ *        description: Invalid refresh token
+ */
 router.delete(
   "/logout",
   passport.authenticate(["jwt"], { session: false }),
@@ -116,6 +229,26 @@ router.delete(
   }
 );
 
+/**
+ * @swagger
+ * /api/auth/forgot_password:
+ *  post:
+ *    summary: Send email for password recovery
+ *    tags:
+ *      - Authorization
+ *    parameters:
+ *      - in: body
+ *        name: email
+ *        type: string
+ *        required: true
+ *    responses:
+ *      '200':
+ *        description: Email sent
+ *      '400':
+ *        description: No email provided
+ *      '500':
+ *        description: Error sendign email
+ */
 router.post("/forgot_password", async (req, res) => {
   const { email } = req.body;
 
@@ -139,6 +272,34 @@ router.post("/forgot_password", async (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /api/auth/reset_password:
+ *  post:
+ *    summary: Reset password
+ *    tags:
+ *      - Authorization
+ *    parameters:
+ *      - in: body
+ *        name: userId
+ *        type: string
+ *        required: true
+ *      - in: body
+ *        name: token
+ *        type: string
+ *        required: true
+ *      - in: body
+ *        name: newPassword
+ *        type: string
+ *        required: true
+ *    responses:
+ *      '202':
+ *        description: Password changed
+ *      '400':
+ *        description: Invalid user
+ *      '401':
+ *        description: Reset password token expired
+ */
 router.post("/reset_password", async (req, res) => {
   const { userId, token, newPassword } = req.body;
 
@@ -169,6 +330,15 @@ router.post("/reset_password", async (req, res) => {
   res.status(202).send("Password changed.");
 });
 
+/**
+ * @swagger
+ * /api/auth/google:
+ *  get:
+ *    summary: Display google form for autherization
+ *    tags:
+ *      - Authorization
+ *    description: To get accessToken and refreshToken create window.authenticationCallback(access, refresh)
+ */
 router.get(
   "/google",
   passport.authenticate("google", {
@@ -190,6 +360,15 @@ router.get(
   }
 );
 
+/**
+ * @swagger
+ * /api/auth/facebook:
+ *  get:
+ *    summary: Display facebook form for autherization
+ *    tags:
+ *      - Authorization
+ *    description: To get accessToken and refreshToken create window.authenticationCallback(access, refresh)
+ */
 router.get(
   "/facebook",
   passport.authenticate("facebook", {
