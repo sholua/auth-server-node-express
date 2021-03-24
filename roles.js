@@ -18,6 +18,10 @@ module.exports = (function () {
     .updateAny("department")
     .deleteAny("department")
 
+    .createAny("note")
+    .updateAny("note")
+    .deleteAny("note")
+
     .createAny("instrument")
     .updateAny("instrument")
     .deleteAny("instrument");

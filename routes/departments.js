@@ -3,7 +3,6 @@ const router = require("express").Router();
 const passport = require("passport");
 const { combineJoiErrorMessages } = require("../utilities/common");
 const _ = require("lodash");
-const ObjectId = require("mongoose").Types.ObjectId;
 const checkObjectId = require("../middleware/checkObjectId");
 const grantAccess = require("../middleware/grantAccess");
 

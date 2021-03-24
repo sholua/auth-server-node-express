@@ -34,8 +34,14 @@ const noteSchema = new mongoose.Schema(
         "trio",
       ],
     },
-    publisher: mongoose.Types.ObjectId,
-    instrument: mongoose.Types.ObjectId,
+    publisher: {
+      type: mongoose.Types.ObjectId,
+      ref: "User",
+    },
+    instrument: {
+      type: mongoose.Types.ObjectId,
+      ref: "Instrument",
+    },
     grade: {
       type: Number,
       enum: [0, 1, 2, 3, 4, 5, 6, 7, 8],
@@ -62,9 +68,9 @@ function validate(note) {
         "trio"
       )
       .required(),
-    publisher: Joi.ObjectId(),
-    insturment: Joi.ObjectId(),
-    grade: Joi.Number().valid(0, 1, 2, 3, 4, 5, 6, 7, 8),
+    publisher: Joi.objectId(),
+    instrument: Joi.objectId(),
+    grade: Joi.number().valid(0, 1, 2, 3, 4, 5, 6, 7, 8),
   });
 
   return schema.validate(note);
