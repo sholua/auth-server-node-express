@@ -18,7 +18,7 @@ const Department = mongoose.model("Department", departmentSchema);
 
 function validate(department) {
   const schema = Joi.object({
-    name: Joi.string().min(4).max(50).required(),
+    name: Joi.string().min(4).max(50).required().label("Name"),
   });
 
   return schema.validate(department);
