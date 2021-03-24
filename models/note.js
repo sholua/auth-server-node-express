@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
 
+// musical notes (pdf)
 const noteSchema = new mongoose.Schema(
   {
     name: {
@@ -9,6 +10,10 @@ const noteSchema = new mongoose.Schema(
       minlength: 4,
       maxlength: 50,
       trim: true,
+    },
+    file: {
+      type: String,
+      required: true,
     },
     author: {
       type: String,
@@ -30,16 +35,11 @@ const noteSchema = new mongoose.Schema(
       ],
     },
     publisher: mongoose.Types.ObjectId,
-    department: {
-      type: mongoose.Types.ObjectId,
-      required: true,
-    },
     instrument: mongoose.Types.ObjectId,
     grade: {
       type: Number,
       enum: [0, 1, 2, 3, 4, 5, 6, 7, 8],
     },
-    contest: Boolean,
   },
   { timestamps: true }
 );
@@ -49,8 +49,22 @@ const Note = mongoose.model("Note", noteSchema);
 function validate(note) {
   const schema = Joi.object({
     name: Joi.string().min(4).max(50).required(),
+    file: Joi.string().required(),
     author: Joi.string().min(4).max(50).required(),
+    type: Joi.string()
+      .valid(
+        "polyphony",
+        "big_form",
+        "etude",
+        "piece",
+        "exercise",
+        "duet",
+        "trio"
+      )
+      .required(),
     publisher: Joi.ObjectId(),
+    insturment: Joi.ObjectId(),
+    grade: Joi.Number().valid(0, 1, 2, 3, 4, 5, 6, 7, 8),
   });
 
   return schema.validate(note);
