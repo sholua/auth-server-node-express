@@ -4,6 +4,7 @@ const passport = require("passport");
 const { combineJoiErrorMessages } = require("../utilities/common");
 const _ = require("lodash");
 const ObjectId = require("mongoose").Types.ObjectId;
+const checkObjectId = require("../middleware/checkObjectId");
 
 /**
  * @swagger
@@ -77,10 +78,7 @@ router.get("/", async (req, res) => {
  *      '5xx':
  *        description: Unexpected error
  */
-router.get("/:id", async (req, res) => {
-  if (!ObjectId.isValid(req.params.id))
-    return res.status(400).send("Wrong department id.");
-
+router.get("/:id", checkObjectId, async (req, res) => {
   const department = await Department.findById(req.params.id).select("-__v");
 
   if (!department) return res.status(404).send("Deaprtment was not found.");
@@ -109,10 +107,8 @@ router.get("/:id", async (req, res) => {
 router.put(
   "/:id",
   passport.authenticate(["jwt"], { session: false }),
+  checkObjectId,
   async (req, res) => {
-    if (!ObjectId.isValid(req.params.id))
-      return res.status(400).send("Wrong department id.");
-
     const { error } = validate(req.body);
     if (error) return res.status(400).send(combineJoiErrorMessages(error));
 
@@ -150,10 +146,8 @@ router.put(
 router.delete(
   "/:id",
   passport.authenticate(["jwt"], { session: false }),
+  checkObjectId,
   async (req, res) => {
-    if (!ObjectId.isValid(req.params.id))
-      return res.status(400).send("Wrong department id.");
-
     const department = await Department.findOneAndDelete({
       _id: req.params.id,
     });
