@@ -5,6 +5,7 @@ const { combineJoiErrorMessages } = require("../utilities/common");
 const _ = require("lodash");
 const ObjectId = require("mongoose").Types.ObjectId;
 const checkObjectId = require("../middleware/checkObjectId");
+const grantAccess = require("../middleware/grantAccess");
 
 /**
  * @swagger
@@ -32,6 +33,7 @@ const checkObjectId = require("../middleware/checkObjectId");
 router.post(
   "/",
   passport.authenticate(["jwt"], { session: false }),
+  grantAccess("createAny", "department"),
   async (req, res) => {
     const { error } = validate(req.body);
     if (error) return res.status(400).send(combineJoiErrorMessages(error));
@@ -107,6 +109,7 @@ router.get("/:id", checkObjectId, async (req, res) => {
 router.put(
   "/:id",
   passport.authenticate(["jwt"], { session: false }),
+  grantAccess("updateAny", "department"),
   checkObjectId,
   async (req, res) => {
     const { error } = validate(req.body);
@@ -146,6 +149,7 @@ router.put(
 router.delete(
   "/:id",
   passport.authenticate(["jwt"], { session: false }),
+  grantAccess("deleteAny", "department"),
   checkObjectId,
   async (req, res) => {
     const department = await Department.findOneAndDelete({
