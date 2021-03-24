@@ -3,6 +3,7 @@ const router = require("express").Router();
 const passport = require("passport");
 const { combineJoiErrorMessages } = require("../utilities/common");
 const _ = require("lodash");
+const ObjectId = require("mongoose").Types.ObjectId;
 
 /**
  * @swagger
@@ -37,7 +38,7 @@ router.post(
     const department = new Department({ name: req.body.name });
     await department.save();
 
-    res.status(200).send(_.pick(department, ["_id", "name"]));
+    res.status(201).send(_.pick(department, ["_id", "name"]));
   }
 );
 
@@ -77,7 +78,13 @@ router.get("/", async (req, res) => {
  *        description: Unexpected error
  */
 router.get("/:id", async (req, res) => {
+  if (!ObjectId.isValid(req.params.id))
+    return res.status(400).send("Wrong department id.");
+
   const department = await Department.findById(req.params.id).select("-__v");
+
+  if (!department) return res.status(404).send("Deaprtment was not found.");
+
   res.status(200).send(department);
 });
 
@@ -103,6 +110,9 @@ router.put(
   "/:id",
   passport.authenticate(["jwt"], { session: false }),
   async (req, res) => {
+    if (!ObjectId.isValid(req.params.id))
+      return res.status(400).send("Wrong department id.");
+
     const { error } = validate(req.body);
     if (error) return res.status(400).send(combineJoiErrorMessages(error));
 
@@ -141,6 +151,9 @@ router.delete(
   "/:id",
   passport.authenticate(["jwt"], { session: false }),
   async (req, res) => {
+    if (!ObjectId.isValid(req.params.id))
+      return res.status(400).send("Wrong department id.");
+
     const department = await Department.findOneAndDelete({
       _id: req.params.id,
     });
