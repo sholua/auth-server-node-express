@@ -10,11 +10,17 @@ module.exports = (function () {
 
   ac.grant("admin")
     .extend(["basic", "pupil", "teacher"])
+
     .updateAny("profile")
     .deleteAny("profile")
+
     .createAny("department")
     .updateAny("department")
-    .deleteAny("department");
+    .deleteAny("department")
+
+    .createAny("instrument")
+    .updateAny("instrument")
+    .deleteAny("instrument");
 
   return ac;
 })();

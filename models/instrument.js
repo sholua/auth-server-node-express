@@ -20,6 +20,7 @@ const Instrument = mongoose.model("Instrument", instrumentSchema);
 function validate(instrument) {
   const schema = Joi.object({
     name: Joi.string().min(4).max(50).required(),
+    description: Joi.string(),
   });
 
   return schema.validate(instrument);
