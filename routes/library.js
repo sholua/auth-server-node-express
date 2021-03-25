@@ -5,6 +5,8 @@ const { combineJoiErrorMessages } = require("../utilities/common");
 const _ = require("lodash");
 const checkObjectId = require("../middleware/checkObjectId");
 const grantAccess = require("../middleware/grantAccess");
+const uploadPdf = require("../middleware/uploadPdf");
+const fs = require("fs");
 
 /**
  * @swagger
@@ -62,23 +64,42 @@ router.post(
   passport.authenticate(["jwt"], { session: false }),
   grantAccess("createAny", "note"),
   async (req, res) => {
-    const { error } = validate(req.body);
-    if (error) return res.status(400).send(combineJoiErrorMessages(error));
+    try {
+      await uploadPdf("file")(req, res);
 
-    const note = new Note(
-      _.pick(req.body, [
-        "name",
-        "file",
-        "author",
-        "type",
-        "publisher",
-        "instrument",
-        "grade",
-      ])
-    );
-    await note.save();
+      if (req.file === undefined) {
+        return res.status(400).send("Please upload a file!");
+      }
+      req.body.file = req.file.filename;
+      const { error } = validate(req.body);
+      if (error) {
+        fs.unlink(`${__basedir}/uploads/${req.body.file}`, (err) => {
+          if (err) return console.log(err);
+        });
+        return res.status(400).send(combineJoiErrorMessages(error));
+      }
 
-    res.status(201).send(note);
+      const note = new Note(
+        _.pick(req.body, [
+          "name",
+          "file",
+          "author",
+          "type",
+          "publisher",
+          "instrument",
+          "grade",
+        ])
+      );
+      await note.save();
+
+      res.status(201).send(note);
+    } catch (err) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).send("File size cannot be larger than 3MB!");
+      }
+
+      res.status(400).send(err);
+    }
   }
 );
 
