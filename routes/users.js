@@ -26,9 +26,9 @@ router.get(
   passport.authenticate(["jwt"], {
     session: false,
   }),
-  grantAccess("readAny", "profile"),
+  // grantAccess("readAny", "profile"),
   async (req, res) => {
-    const users = await User.find().select("_id firstName email");
+    const users = await User.find().select("_id firstName email role");
     res.send(users);
   }
 );
