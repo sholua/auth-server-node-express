@@ -214,7 +214,7 @@ router.delete(
   "/logout",
   passport.authenticate(["jwt"], { session: false }),
   async (req, res) => {
-    const { refreshToken } = req.body.params;
+    const { refreshToken } = req.body;
     if (!refreshToken) return res.status(401).send("No token provided.");
 
     const decodedRefreshToken = jwt.verify(
